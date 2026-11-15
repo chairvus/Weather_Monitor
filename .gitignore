@@ -1,0 +1,23 @@
+# Environments
+venv/
+.venv/
+env/
+
+# Secrets
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# PyInstaller build files
+build/
+dist/
+*.spec
+
+# Local Data and Logs (Don't upload user data)
+data/
+logs/
+
+# macOS System Files
+.DS_Store
