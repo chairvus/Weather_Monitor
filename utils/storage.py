@@ -4,10 +4,12 @@ import json
 from datetime import datetime
 from tkinter import filedialog
 
-# Use an absolute path in the user's home directory
+# 1. Define the base directory and expand the '~'
 DATA_DIR = os.path.expanduser("~/Arth/donlod-things")
 os.makedirs(DATA_DIR, exist_ok=True)
-CSV_FILE = os.path.join(DATA_DIR, "~/Arth/donlod-things/weather_history.csv")
+
+# 2. Join the base directory with the actual filenames
+CSV_FILE = os.path.join(DATA_DIR, "weather_history.csv")
 LAST_LOCATION_FILE = os.path.join(DATA_DIR, "last_location.json")
 
 
