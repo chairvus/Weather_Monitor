@@ -5,10 +5,9 @@ from datetime import datetime
 from tkinter import filedialog
 
 # 1. Define the base directory and expand the '~'
-DATA_DIR = os.path.expanduser("~/Arth/donlod-things")
+DATA_DIR = os.path.expanduser("~/Documents/WeatherMonitor/data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# 2. Join the base directory with the actual filenames
 CSV_FILE = os.path.join(DATA_DIR, "weather_history.csv")
 LAST_LOCATION_FILE = os.path.join(DATA_DIR, "last_location.json")
 

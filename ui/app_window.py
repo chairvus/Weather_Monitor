@@ -103,8 +103,13 @@ class WeatherApp(ctk.CTk):
         )
         self.save_btn.pack(pady=10)
 
+        # CHANGED: Added wraplength and justify for better error handling
         self.status_label = ctk.CTkLabel(
-            self, text="Status: Waiting...", text_color="gray"
+            self,
+            text="Status: Waiting...",
+            text_color="gray",
+            wraplength=600,
+            justify="center",
         )
         self.status_label.pack(side="bottom")
 
@@ -190,9 +195,6 @@ class WeatherApp(ctk.CTk):
 
         self.status_label.configure(text="Status: Restoring...", text_color="yellow")
 
-        # The saved location may come from an older version that stored a
-        # shortened address ("Bantul, Daerah Istimewa Yogyakar..."). Rebuild the
-        # full address from the saved coordinates instead of showing it as-is.
         if self._looks_truncated(last_loc["full_address"]):
             threading.Thread(
                 target=self._worker_heal_address, args=(last_loc,), daemon=True
@@ -358,10 +360,40 @@ class WeatherApp(ctk.CTk):
                 lambda: self.on_location_selected(self._selected_loc),
             )
 
+    # CHANGED: Replaced the raw error print with a translator
     def update_gui_error(self, error_msg):
-        self.status_label.configure(text=f"Error: {error_msg}", text_color="red")
+        # 1. Parse the technical error into a friendly message
+        err_lower = str(error_msg).lower()
+
+        if "timeout" in err_lower or "timed out" in err_lower:
+            friendly_msg = (
+                "The request timed out. Please check your internet connection."
+            )
+        elif "connection" in err_lower or "network" in err_lower:
+            friendly_msg = "No internet connection. Please connect and try again."
+        elif "400" in err_lower:
+            friendly_msg = "Invalid request. Please check your location or date format."
+        elif "404" in err_lower:
+            friendly_msg = "Location not found. Please try a different search."
+        elif "429" in err_lower:
+            friendly_msg = (
+                "Too many requests. Please wait a moment before trying again."
+            )
+        elif "500" in err_lower or "502" in err_lower or "503" in err_lower:
+            friendly_msg = "The weather service is currently down. Try again later."
+        elif "future dates" in err_lower:
+            friendly_msg = "Cannot fetch future dates. Please select a past date."
+        elif "not found" in err_lower:
+            friendly_msg = "Location not found. Please check the spelling."
+        else:
+            friendly_msg = "An unexpected error occurred. Please check the logs."
+
+        # 2. Show the friendly message in the UI
+        self.status_label.configure(text=f"⚠️ {friendly_msg}", text_color="#ff4d4d")
         self.search_btn.configure(state="normal")
         self.location_dropdown.configure(state="normal")
+
+        # 3. Save the ugly technical error to your log file for debugging
         log_error(f"GUI encountered error: {error_msg}")
 
     def on_close(self):
