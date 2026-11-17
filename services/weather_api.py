@@ -5,21 +5,19 @@ from config import Config
 from services.data_parser import parse_weather_data
 from utils.logger import log_info, log_error
 
-# --- DATA CORRECTION DICTIONARY ---
-# OpenStreetMap occasionally has incorrect administrative tags.
-# This dictionary overrides specific errors before rendering to the UI.
+
 DISTRICT_CORRECTIONS = {
     "berbah": "Umbulharjo",  # Fixes the Giwangan mismatch
 }
 
 
-def _build_clean_address(place_name, district, city, state):
+def _build_clean_address(place_name, district, city, state, country):
     """
     BEST PRACTICE: De-duplication Loop.
     Combines address parts but removes duplicates.
-    Example: ["Bantul", "Bantul", "Bantul", "DIY"] -> "Bantul, DIY"
+    Example: ["Bantul", "Bantul", "Bantul", "DIY", "Indonesia"] -> "Bantul, DIY, Indonesia"
     """
-    raw_parts = [place_name, district, city, state]
+    raw_parts = [place_name, district, city, state, country]
     unique_parts = []
     seen = set()
 
@@ -77,9 +75,12 @@ def search_locations_nominatim(query):
                 addr.get("city") or addr.get("municipality") or addr.get("town") or ""
             )
             state = addr.get("state") or ""
+            country = addr.get("country") or ""
 
             # 2. Build the clean string using the de-duplication loop
-            concise_label = _build_clean_address(place_name, district, city, state)
+            concise_label = _build_clean_address(
+                place_name, district, city, state, country
+            )
             if not concise_label:
                 concise_label = raw_name
 
@@ -125,14 +126,17 @@ def reverse_geocode_nominatim(lat, lon):
             or addr.get("suburb")
             or "Current Location"
         )
+
         raw_district = (
             addr.get("suburb") or addr.get("district") or addr.get("county") or ""
         )
         district = DISTRICT_CORRECTIONS.get(raw_district.lower(), raw_district)
+
         city = addr.get("city") or addr.get("municipality") or addr.get("town") or ""
         state = addr.get("state") or ""
+        country = addr.get("country") or ""
 
-        clean_address = _build_clean_address(place_name, district, city, state)
+        clean_address = _build_clean_address(place_name, district, city, state, country)
         return clean_address if clean_address else "Unknown Location"
     except Exception as e:
         log_error(f"Reverse geocode failed: {str(e)}")
